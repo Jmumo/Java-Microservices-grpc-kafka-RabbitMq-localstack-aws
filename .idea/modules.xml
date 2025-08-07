@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/Biling-Service/Biling-Service.iml" filepath="$PROJECT_DIR$/Biling-Service/Biling-Service.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/Patient-Management.iml" filepath="$PROJECT_DIR$/.idea/Patient-Management.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Patient-Service.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Patient-Service.main.iml" />
+    </modules>
+  </component>
+</project>

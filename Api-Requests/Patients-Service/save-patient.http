@@ -1,0 +1,20 @@
+### GET request to example server
+POST http://localhost:9999/patients/save
+Content-Type: application/json
+
+{
+  "name": "Jane Doe",
+  "email": "jane.doe9@example.com",
+  "phone": "0712345678",
+  "address": "456 Elm Street, Nairobi",
+  "gender": "Female",
+  "bloodGroup": "A+",
+  "dob": "1990-05-20",
+  "admissionDate": "",
+  "status": "admitted"
+}
+
+
+
+
+###

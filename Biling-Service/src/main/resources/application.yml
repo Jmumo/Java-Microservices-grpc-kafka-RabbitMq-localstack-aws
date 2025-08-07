@@ -1,0 +1,12 @@
+
+spring:
+  application:
+    name: Biling-Service
+
+
+server:
+  port: 2000
+
+grpc:
+  server:
+    port: 2001

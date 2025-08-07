@@ -1,0 +1,157 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.4'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.google.protobuf' version '0.9.4'
+    id 'idea'
+    id 'eclipse'
+}
+
+
+
+// Equivalent to os-maven-plugin for OS detection
+def osClassifier = System.getProperty('os.name').toLowerCase().with {
+    contains('win') ? 'windows' :
+            contains('linux') ? 'linux' :
+                    contains('mac') ? 'osx' :
+                            'unknown'
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.25.5"
+    }
+    plugins {
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:1.68.1"
+        }
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java {}
+            }
+            task.plugins {
+                grpc {}
+            }
+        }
+    }
+    generatedFilesBaseDir = "$projectDir/src/generated"
+}
+
+processResources {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE // or WARN/EXCLUDE
+}
+
+clean {
+    delete protobuf.generatedFilesBaseDir
+}
+
+sourceSets {
+    main {
+        proto {
+            srcDir 'src/main/proto'
+        }
+        java {
+            srcDirs = [
+                    'src/main/java',
+                    "$buildDir/generated/source/proto/main/java",
+                    "$buildDir/generated/source/proto/main/grpc"
+            ]
+        }
+    }
+}
+
+// Ensure proto generation happens before compilation
+tasks.named('compileJava').configure {
+    dependsOn 'generateProto'
+}
+
+// Spring Boot configuration (equivalent to spring-boot-maven-plugin)
+springBoot {
+    buildInfo()
+}
+
+// For IDE support
+idea {
+    module {
+        sourceDirs += file("$buildDir/generated/source/proto/main/java")
+        sourceDirs += file("$buildDir/generated/source/proto/main/grpc")
+        generatedSourceDirs += file("$buildDir/generated/source/proto/main/java")
+        generatedSourceDirs += file("$buildDir/generated/source/proto/main/grpc")
+    }
+}
+
+if (plugins.hasPlugin('eclipse')) {
+    eclipse {
+        classpath {
+            file {
+                whenMerged {
+                    entries += new org.gradle.plugins.ide.eclipse.model.SourceFolder(
+                            'build/generated/source/proto/main/java', null
+                    )
+                    entries += new org.gradle.plugins.ide.eclipse.model.SourceFolder(
+                            'build/generated/source/proto/main/grpc', null
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+
+
+group = 'com.patient-service'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'com.h2database:h2:2.2.224' // or latest version
+    compileOnly 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    runtimeOnly 'org.postgresql:postgresql'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9'
+
+    implementation 'io.grpc:grpc-netty-shaded:1.69.0'
+    implementation 'io.grpc:grpc-protobuf:1.69.0'
+    implementation 'io.grpc:grpc-stub:1.69.0'
+
+    // Required for Java 9+
+    compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
+
+    // Spring Boot Starter
+    implementation 'net.devh:grpc-spring-boot-starter:3.1.0.RELEASE'
+
+    // Protocol Buffers
+    implementation 'com.google.protobuf:protobuf-java:4.29.1'
+
+    // Optional: If you need protobuf Java util
+    implementation 'com.google.protobuf:protobuf-java-util:4.29.1'
+
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

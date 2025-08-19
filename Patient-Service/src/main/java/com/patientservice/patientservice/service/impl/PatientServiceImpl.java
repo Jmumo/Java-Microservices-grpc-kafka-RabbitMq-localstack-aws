@@ -6,6 +6,7 @@ import com.patientservice.patientservice.Repository.PatientRepository;
 import com.patientservice.patientservice.dto.PatientRequestDTO;
 import com.patientservice.patientservice.dto.PatientResponseDTO;
 import com.patientservice.patientservice.grpc.BillingServiceGrpcClient;
+import com.patientservice.patientservice.kafka.KafkaProducer;
 import com.patientservice.patientservice.mapper.PatientMapper;
 import com.patientservice.patientservice.model.Patient;
 import com.patientservice.patientservice.service.PatientService;
@@ -21,10 +22,12 @@ import java.util.UUID;
 public class PatientServiceImpl implements PatientService {
     private final PatientRepository patientRepository;
     private final BillingServiceGrpcClient billingServiceGrpcClient;
+    private final KafkaProducer kafkaProducer;
 
-    public PatientServiceImpl(PatientRepository patientRepository, BillingServiceGrpcClient billingServiceGrpcClient) {
+    public PatientServiceImpl(PatientRepository patientRepository, BillingServiceGrpcClient billingServiceGrpcClient, KafkaProducer kafkaProducer) {
         this.patientRepository = patientRepository;
         this.billingServiceGrpcClient = billingServiceGrpcClient;
+        this.kafkaProducer = kafkaProducer;
     }
 
     @Override
@@ -42,6 +45,7 @@ public class PatientServiceImpl implements PatientService {
         }
         Patient patient = patientRepository.save(PatientMapper.toPatient(patientRequestDTO));
         billingServiceGrpcClient.createBillingAccount(patient.getId().toString(), patient.getName(), patient.getEmail());
+        kafkaProducer.sendMessage(patient);
         return PatientMapper.toPatientResponseDTO(patient);
     }
 

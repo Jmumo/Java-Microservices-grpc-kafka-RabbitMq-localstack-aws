@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: admin_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: patient_platform
+    ports:
+      - "5435:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./data.sql:/docker-entrypoint-initdb.d/data.sql
+    networks:
+      - app-network
+
+  patient-service:
+    build: ./patient-service
+    ports:
+      - "9999:9999"
+    depends_on:
+      - postgres
+
+    environment:
+      SPRING_PROFILES_ACTIVE: compose
+      SERVER_PORT: 9999
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/patient_platform
+      SPRING_DATASOURCE_USERNAME: admin_user
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SQL_INIT_MODE: always
+      BILLING_SERVICE_ADDRESS: billing-service
+      BILLING_SERVICE_GRPC_PORT: 2001
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    networks:
+      - app-network
+
+
+  billing-service:
+    build: ./Biling-Service
+    ports:
+      - "2000:2000"
+      - "2001:2001"
+    depends_on:
+      - postgres
+
+    environment:
+      SPRING_PROFILES_ACTIVE: compose
+      SERVER_PORT: 2000
+      GRPC_SERVER_PORT: 2001
+    networks:
+      - app-network
+
+
+
+  analytics-service:
+    build: ./analytics-service
+    ports:
+      - "2002:2002"
+    depends_on:
+      - patient-service
+    environment:
+      SPRING_PROFILES_ACTIVE: compose
+      SERVER_PORT: 2002
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    networks:
+      - app-network
+
+
+
+
+  kafka:
+    image: bitnami/kafka:latest
+    hostname: kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"  # PLAINTEXT listener
+      - "9094:9094"  # EXTERNAL listener
+      - "9093:9093"  # CONTROLLER listener
+    environment:
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@kafka:9093
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      KAFKA_CFG_NODE_ID: 0
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+
+
+    networks:
+      - app-network
+
+networks:
+  app-network:  # Define the custom network
+    driver: bridge
+
+
+volumes:
+  pgdata:

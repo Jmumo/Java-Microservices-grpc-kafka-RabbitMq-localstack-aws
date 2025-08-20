@@ -1,10 +1,10 @@
 ### GET request to example server
-POST http://localhost:9999/patients/save
+POST http://localhost:2004/api/patients/save
 Content-Type: application/json
 
 {
   "name": "Jane Doe",
-  "email": "jane.kafka125kafka1234@example.com",
+  "email": "jane.kafka125kafkagateway@example.com",
   "phone": "0712345678",
   "address": "456 Elm Street, Nairobi",
   "gender": "Female",

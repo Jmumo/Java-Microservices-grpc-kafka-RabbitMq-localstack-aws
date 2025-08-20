@@ -17,8 +17,6 @@ services:
 
   patient-service:
     build: ./patient-service
-    ports:
-      - "9999:9999"
     depends_on:
       - postgres
 
@@ -39,9 +37,9 @@ services:
 
   billing-service:
     build: ./Biling-Service
-    ports:
-      - "2000:2000"
-      - "2001:2001"
+#    ports:
+#      - "2000:2000"
+#      - "2001:2001"
     depends_on:
       - postgres
 
@@ -53,11 +51,10 @@ services:
       - app-network
 
 
-
   analytics-service:
     build: ./analytics-service
-    ports:
-      - "2002:2002"
+#    ports:
+#      - "2002:2002"
     depends_on:
       - patient-service
     environment:
@@ -67,7 +64,17 @@ services:
     networks:
       - app-network
 
-
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "2004:2004"
+    depends_on:
+      - patient-service
+    environment:
+      SPRING_PROFILES_ACTIVE: compose
+      SERVER_PORT: 2004
+    networks:
+      - app-network
 
 
   kafka:

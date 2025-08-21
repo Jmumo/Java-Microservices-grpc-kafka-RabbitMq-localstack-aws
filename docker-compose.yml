@@ -57,11 +57,12 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: compose
       SERVER_PORT: 2005
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresAuth:5431/auth_platform
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresAuth:5432/auth_platform
       SPRING_DATASOURCE_USERNAME: admin_user
       SPRING_DATASOURCE_PASSWORD: password
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_SQL_INIT_MODE: always
+      JWT_SECRET: 6URRK4UPsTbVvb8ykfpVZ1Mysz0cnRxOgNdGgWo6e3oScESm54jArNYaoPRbKiS8JSSAui3iILgEsDTm4JMfBuddRYrsSdpEJQsAaex6RsnDCaVRDnZ62Vc1oSVMcDRjh0z5QIo1oGKbYJCpuBvWLYdL4nmwCozHixW5J0yFcLFjl4hC14jqN3D2XXiH1MTM
     networks:
       - app-network
 
@@ -98,6 +99,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: compose
       SERVER_PORT: 2004
+      AUTH_SERVICE_URL: http://auth-service:2005
     networks:
       - app-network
 

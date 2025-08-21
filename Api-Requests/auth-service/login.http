@@ -1,0 +1,12 @@
+### GET request to example server
+POST http://localhost:2004/auth/generate-token
+Content-Type: application/json
+
+{
+  "email" : "testuser@test.com",
+  "password": "password123"
+}
+
+> {% client.global.set("token", response.body.token) %}
+
+###

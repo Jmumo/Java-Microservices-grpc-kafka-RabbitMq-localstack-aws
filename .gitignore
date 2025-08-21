@@ -46,3 +46,18 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
+
+Auth-Service/.gitattributes
+Auth-Service/.gitignore
+Auth-Service/.mvn/
+Auth-Service/mvnw
+Auth-Service/mvnw.cmd
+
+
+
+api-gateway/.gitattributes
+api-gateway/.gitignore
+api-gateway/mvnw
+api-gateway/mvnw.cmd

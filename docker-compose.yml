@@ -15,6 +15,21 @@ services:
     networks:
       - app-network
 
+
+  postgresAuth:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: admin_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: auth_platform
+    ports:
+      - "5431:5432"
+    volumes:
+      - pg_auth_data:/var/lib/postgresql/data
+      - ./auth.sql:/docker-entrypoint-initdb.d/auth.sql
+    networks:
+      - app-network
+
   patient-service:
     build: ./patient-service
     depends_on:
@@ -35,14 +50,27 @@ services:
       - app-network
 
 
+  auth-service:
+    build: ./Auth-Service
+    depends_on:
+      - postgresAuth
+    environment:
+      SPRING_PROFILES_ACTIVE: compose
+      SERVER_PORT: 2005
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresAuth:5432/auth_platform
+      SPRING_DATASOURCE_USERNAME: admin_user
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SQL_INIT_MODE: always
+      JWT_SECRET: 6URRK4UPsTbVvb8ykfpVZ1Mysz0cnRxOgNdGgWo6e3oScESm54jArNYaoPRbKiS8JSSAui3iILgEsDTm4JMfBuddRYrsSdpEJQsAaex6RsnDCaVRDnZ62Vc1oSVMcDRjh0z5QIo1oGKbYJCpuBvWLYdL4nmwCozHixW5J0yFcLFjl4hC14jqN3D2XXiH1MTM
+    networks:
+      - app-network
+
+
   billing-service:
     build: ./Biling-Service
-#    ports:
-#      - "2000:2000"
-#      - "2001:2001"
     depends_on:
       - postgres
-
     environment:
       SPRING_PROFILES_ACTIVE: compose
       SERVER_PORT: 2000
@@ -53,8 +81,6 @@ services:
 
   analytics-service:
     build: ./analytics-service
-#    ports:
-#      - "2002:2002"
     depends_on:
       - patient-service
     environment:
@@ -73,6 +99,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: compose
       SERVER_PORT: 2004
+      AUTH_SERVICE_URL: http://auth-service:2005
     networks:
       - app-network
 
@@ -105,3 +132,4 @@ networks:
 
 volumes:
   pgdata:
+  pg_auth_data:

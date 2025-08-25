@@ -60,6 +60,9 @@ public class LocalStack extends Stack{
         this.vpc = createVpc();
         DatabaseInstance authDB = createDatabaseInstance("authDB", "auth_platform");
         DatabaseInstance patientDB = createDatabaseInstance("patientDB", "patient_platform");
+
+        CfnHealthCheck authDBHealthCheck = dataBaseHealthCheck(authDB, "authDBHealthCheck");
+        CfnHealthCheck patientDBHealthCheck = dataBaseHealthCheck(patientDB, "patientDBHealthCheck");
     }
 
     public static void main(final String[] args) {
@@ -95,6 +98,21 @@ public class LocalStack extends Stack{
                 .databaseName(dbName)
                 .removalPolicy(RemovalPolicy.DESTROY)
                 .build();
+    }
+
+    private CfnHealthCheck dataBaseHealthCheck(
+            DatabaseInstance databaseInstance,
+            String id
+    ){
+      return CfnHealthCheck.Builder.create(this,id)
+              .healthCheckConfig(CfnHealthCheck.HealthCheckConfigProperty.builder()
+                      .type("TCP")
+                      .port(Token.asNumber(databaseInstance.getDbInstanceEndpointPort()))
+                      .ipAddress(databaseInstance.getDbInstanceEndpointAddress())
+                      .requestInterval(30)
+                      .failureThreshold(3)
+                      .build())
+              .build();
     }
 
 

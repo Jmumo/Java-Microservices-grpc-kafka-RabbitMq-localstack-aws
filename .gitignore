@@ -61,3 +61,6 @@ api-gateway/.gitattributes
 api-gateway/.gitignore
 api-gateway/mvnw
 api-gateway/mvnw.cmd
+
+
+Infrastructure/cdk.out/*

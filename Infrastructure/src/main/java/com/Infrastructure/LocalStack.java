@@ -1,0 +1,106 @@
+package com.Infrastructure;
+
+import com.amazonaws.services.machinelearning.model.RDSDatabase;
+import software.amazon.awscdk.services.ec2.Vpc;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import software.amazon.awscdk.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import software.amazon.awscdk.App;
+import software.amazon.awscdk.AppProps;
+import software.amazon.awscdk.BootstraplessSynthesizer;
+import software.amazon.awscdk.Duration;
+import software.amazon.awscdk.RemovalPolicy;
+import software.amazon.awscdk.Stack;
+import software.amazon.awscdk.StackProps;
+import software.amazon.awscdk.Token;
+import software.amazon.awscdk.services.ec2.ISubnet;
+import software.amazon.awscdk.services.ec2.InstanceClass;
+import software.amazon.awscdk.services.ec2.InstanceSize;
+import software.amazon.awscdk.services.ec2.InstanceType;
+import software.amazon.awscdk.services.ec2.Vpc;
+import software.amazon.awscdk.services.ecs.AwsLogDriverProps;
+import software.amazon.awscdk.services.ecs.CloudMapNamespaceOptions;
+import software.amazon.awscdk.services.ecs.Cluster;
+import software.amazon.awscdk.services.ecs.ContainerDefinitionOptions;
+import software.amazon.awscdk.services.ecs.ContainerImage;
+import software.amazon.awscdk.services.ecs.FargateService;
+import software.amazon.awscdk.services.ecs.FargateTaskDefinition;
+import software.amazon.awscdk.services.ecs.LogDriver;
+import software.amazon.awscdk.services.ecs.PortMapping;
+import software.amazon.awscdk.services.ecs.Protocol;
+import software.amazon.awscdk.services.ecs.patterns.ApplicationLoadBalancedFargateService;
+import software.amazon.awscdk.services.logs.LogGroup;
+import software.amazon.awscdk.services.logs.RetentionDays;
+import software.amazon.awscdk.services.msk.CfnCluster;
+import software.amazon.awscdk.services.rds.Credentials;
+import software.amazon.awscdk.services.rds.DatabaseInstance;
+import software.amazon.awscdk.services.rds.DatabaseInstanceEngine;
+import software.amazon.awscdk.services.rds.PostgresEngineVersion;
+import software.amazon.awscdk.services.rds.PostgresInstanceEngineProps;
+import software.amazon.awscdk.services.route53.CfnHealthCheck;
+
+
+public class LocalStack extends Stack{
+    private static final Log log = LogFactory.getLog(LocalStack.class);
+
+    private final Vpc vpc;
+
+
+    public LocalStack(
+            final App scope,
+            final String id,
+            final StackProps props
+    ){
+        super(scope, id, props);
+        this.vpc = createVpc();
+        DatabaseInstance authDB = createDatabaseInstance("authDB", "auth_platform");
+        DatabaseInstance patientDB = createDatabaseInstance("patientDB", "patient_platform");
+    }
+
+    public static void main(final String[] args) {
+        final App app = new App(AppProps.builder().outdir("./cdk.out").build());
+
+        StackProps props = StackProps.builder().synthesizer(new BootstraplessSynthesizer()).build();
+
+        new LocalStack(app, "LocalStack", props);
+        app.synth();
+
+        log.info("cdk synth successful...");
+
+    }
+
+    private Vpc createVpc(){
+        return Vpc
+                .Builder
+                .create(this,"PatientManagement")
+                .vpcName("PatientManagementVPC")
+                .maxAzs(2)
+                .build();
+    }
+
+    private DatabaseInstance createDatabaseInstance(String id, String dbName){
+        return DatabaseInstance.Builder.create(this, id)
+                .engine(DatabaseInstanceEngine.postgres(PostgresInstanceEngineProps.builder()
+                                .version(PostgresEngineVersion.VER_17_2)
+                        .build()))
+                .vpc(vpc)
+                .instanceType(InstanceType.of(InstanceClass.BURSTABLE2, InstanceSize.MICRO))
+                .allocatedStorage(20)
+                .credentials(Credentials.fromGeneratedSecret("admin_user"))
+                .databaseName(dbName)
+                .removalPolicy(RemovalPolicy.DESTROY)
+                .build();
+    }
+
+
+
+
+    }
+
+
+

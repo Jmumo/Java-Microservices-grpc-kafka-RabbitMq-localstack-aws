@@ -5,6 +5,9 @@ import software.amazon.awscdk.services.ec2.Vpc;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import software.amazon.awscdk.*;
+import software.amazon.awscdk.services.msk.CfnCluster;
+
+
 
 import java.util.HashMap;
 import java.util.List;
@@ -23,20 +26,10 @@ import software.amazon.awscdk.services.ec2.InstanceClass;
 import software.amazon.awscdk.services.ec2.InstanceSize;
 import software.amazon.awscdk.services.ec2.InstanceType;
 import software.amazon.awscdk.services.ec2.Vpc;
-import software.amazon.awscdk.services.ecs.AwsLogDriverProps;
-import software.amazon.awscdk.services.ecs.CloudMapNamespaceOptions;
-import software.amazon.awscdk.services.ecs.Cluster;
-import software.amazon.awscdk.services.ecs.ContainerDefinitionOptions;
-import software.amazon.awscdk.services.ecs.ContainerImage;
-import software.amazon.awscdk.services.ecs.FargateService;
-import software.amazon.awscdk.services.ecs.FargateTaskDefinition;
-import software.amazon.awscdk.services.ecs.LogDriver;
-import software.amazon.awscdk.services.ecs.PortMapping;
-import software.amazon.awscdk.services.ecs.Protocol;
+import software.amazon.awscdk.services.ecs.*;
 import software.amazon.awscdk.services.ecs.patterns.ApplicationLoadBalancedFargateService;
 import software.amazon.awscdk.services.logs.LogGroup;
 import software.amazon.awscdk.services.logs.RetentionDays;
-import software.amazon.awscdk.services.msk.CfnCluster;
 import software.amazon.awscdk.services.rds.Credentials;
 import software.amazon.awscdk.services.rds.DatabaseInstance;
 import software.amazon.awscdk.services.rds.DatabaseInstanceEngine;
@@ -63,6 +56,8 @@ public class LocalStack extends Stack{
 
         CfnHealthCheck authDBHealthCheck = dataBaseHealthCheck(authDB, "authDBHealthCheck");
         CfnHealthCheck patientDBHealthCheck = dataBaseHealthCheck(patientDB, "patientDBHealthCheck");
+
+        CfnCluster mskCluster = createMskCluster();
     }
 
     public static void main(final String[] args) {
@@ -76,6 +71,7 @@ public class LocalStack extends Stack{
         log.info("cdk synth successful...");
 
     }
+
 
     private Vpc createVpc(){
         return Vpc
@@ -115,6 +111,21 @@ public class LocalStack extends Stack{
               .build();
     }
 
+
+    private CfnCluster createMskCluster() {
+        return CfnCluster.Builder.create(this, "MskCluster")
+                .clusterName("kafka-cluster")
+                .kafkaVersion("3.4.0")
+                .numberOfBrokerNodes(1)
+                .brokerNodeGroupInfo(CfnCluster.BrokerNodeGroupInfoProperty.builder()
+                        .instanceType("kafka.m5.xlarge")
+                        .clientSubnets(vpc.getPrivateSubnets().stream()
+                                .map(ISubnet::getSubnetId)
+                                .collect(Collectors.toList()))
+                        .brokerAzDistribution("DEFAULT")
+                        .build())
+                .build();
+    }
 
 
 
